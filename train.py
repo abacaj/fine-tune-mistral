@@ -407,7 +407,6 @@ if __name__ == "__main__":
             # forward
             outputs = model(**inputs)
             loss = outputs.loss
-            loss = loss
 
             # backward
             loss.backward()
