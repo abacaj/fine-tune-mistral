@@ -117,6 +117,7 @@ def evaluation(
 
 
 def get_dataloaders(
+    max_length,
     train_dataset,
     val_dataset,
     world_size,
@@ -128,7 +129,7 @@ def get_dataloaders(
 ):
     lengths = np.array([len(tokens["input_ids"]) for tokens in train_dataset])
     train_sampler = MultipackDistributedBatchSampler(
-        batch_max_length=batch_size * 2048,
+        batch_max_length=batch_size * max_length,
         lengths=lengths,
         num_replicas=world_size,
         rank=local_rank,
@@ -332,6 +333,7 @@ if __name__ == "__main__":
     collator = DataCollatorForSupervisedDataset(tokenizer)
 
     train_sampler, train_loader, val_loader = get_dataloaders(
+        max_length,
         train_dataset,
         val_dataset,
         world_size,
