@@ -1,3 +1,4 @@
+# Sourced from: https://github.com/imoneoi/multipack_sampler
 from typing import Optional, List
 
 import torch.distributed as dist
