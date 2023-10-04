@@ -125,11 +125,12 @@ def get_dataloaders(
     shuffle,
     seed,
     collator,
-    batch_size,
+    train_batch_size,
+    validation_batch_size,
 ):
     lengths = np.array([len(tokens["input_ids"]) for tokens in train_dataset])
     train_sampler = MultipackDistributedBatchSampler(
-        batch_max_length=batch_size * max_length,
+        batch_max_length=train_batch_size * max_length,
         lengths=lengths,
         num_replicas=world_size,
         rank=local_rank,
@@ -156,7 +157,7 @@ def get_dataloaders(
         shuffle=False,
         pin_memory=True,
         drop_last=True,
-        batch_size=batch_size,
+        batch_size=validation_batch_size,
         collate_fn=collator,
         sampler=val_sampler,
     )
@@ -293,7 +294,8 @@ if __name__ == "__main__":
     gradient_checkpointing = True
     clip_gradients = True
     shuffle = True  # multipack sampler already does random sampling
-    batch_size = 2  # adjust as needed
+    train_batch_size = 2  # adjust as needed
+    validation_batch_size = 16  # adjust as needed
     epochs = 3  # adjust as needed
     acc_steps = 0  # TODO: not implemented here yet
     lr = 2e-05  # adjust as needed
@@ -341,7 +343,8 @@ if __name__ == "__main__":
         shuffle,
         seed,
         collator,
-        batch_size,
+        train_batch_size,
+        validation_batch_size,
     )
 
     total_steps_per_epoch = train_sampler.num_batches()
@@ -368,8 +371,8 @@ if __name__ == "__main__":
                 "disable_dropout": disable_dropout,
                 "epochs": epochs,
                 "acc_steps": acc_steps,
-                "batch_size": batch_size,
-                "total_batch_size": batch_size * world_size,
+                "batch_size": train_batch_size,
+                "total_batch_size": train_batch_size * world_size,
                 "scheduler_type": scheduler_type,
             },
         )
