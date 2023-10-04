@@ -27,7 +27,7 @@ def _tokenize_fn(
             return_tensors="pt",
             padding=False,
             max_length=tokenizer.model_max_length,
-            truncation=False,
+            truncation=True,
         )
         for text in strings
     ]
