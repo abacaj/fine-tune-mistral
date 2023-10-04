@@ -1,6 +1,6 @@
 # fine-tune-mistral
 
-Code used to fine-tune this model: [abacaj/mistral-7b-sft](https://huggingface.co/abacaj/mistral-7b-sft). Add you data in data folder as `train.jsonl` and `validation.jsonl`.
+Code used to fine-tune this model: [abacaj/mistral-7b-sft](https://huggingface.co/abacaj/mistral-7b-sft). Add your data in the data folder as `train.jsonl` and `validation.jsonl`.
 
 # How to run
 
