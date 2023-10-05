@@ -21,5 +21,5 @@ torchrun --nnodes=1 --nproc-per-node=<REPLACE_WITH_NUMBER_OF_GPUS> train.py
 - If running with a small batch size, lower the learning rate
 - I did not have to adjust grad clip or weight_decay but YMMV
 - Use enough data, I recommend > 1k samples
-- If you have enough data you can likely go above 3 epochs, 5 or 7
+- I ran this for 3 epochs on 40k samples, will need to experiment more on epochs because the model was still improving.
 - The better way to tell if your model is improving or just overfitting or even getting worse, you should add evaluation on your task. This is data that is not part of training. For example, on code completion you can evaluate your model on the mbpp validation set or a custom set you have.
