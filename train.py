@@ -116,6 +116,7 @@ def evaluation(
 
 
 def get_dataloaders(
+    use_multipack_sampler,
     max_length,
     train_dataset,
     val_dataset,
@@ -127,21 +128,40 @@ def get_dataloaders(
     train_batch_size,
     validation_batch_size,
 ):
-    lengths = np.array([len(tokens["input_ids"]) for tokens in train_dataset])
-    train_sampler = MultipackDistributedBatchSampler(
-        batch_max_length=train_batch_size * max_length,
-        lengths=lengths,
-        num_replicas=world_size,
-        rank=local_rank,
-        seed=seed,
-    )
+    if use_multipack_sampler:
+        lengths = np.array([len(tokens["input_ids"]) for tokens in train_dataset])
+        train_sampler = MultipackDistributedBatchSampler(
+            batch_max_length=train_batch_size * max_length,
+            lengths=lengths,
+            num_replicas=world_size,
+            rank=local_rank,
+            seed=seed,
+        )
 
-    train_loader = DataLoader(
-        train_dataset,
-        pin_memory=True,
-        collate_fn=collator,
-        batch_sampler=train_sampler,
-    )
+        train_loader = DataLoader(
+            train_dataset,
+            pin_memory=True,
+            collate_fn=collator,
+            batch_sampler=train_sampler,
+        )
+    else:
+        train_sampler = DistributedSampler(
+            train_dataset,
+            num_replicas=world_size,
+            rank=local_rank,
+            shuffle=shuffle,
+            seed=seed,
+        )
+
+        train_loader = DataLoader(
+            train_dataset,
+            shuffle=False,
+            pin_memory=True,
+            drop_last=True,
+            batch_size=train_batch_size,
+            collate_fn=collator,
+            sampler=train_sampler,
+        )
 
     val_sampler = DistributedSampler(
         val_dataset,
@@ -300,7 +320,8 @@ if __name__ == "__main__":
     lr = 2e-05  # adjust as needed
     weight_decay = 0.0  # adjust as needed
     gradient_clipping = 1.0  # adjust as needed
-    train_on_inputs = False
+    train_on_inputs = False # whether to train on instruction tokens
+    use_multipack_sampler = True # whether to use the multipack sampler or torch sampler
 
     model, tokenizer = setup_model(model_name, max_length)
     num_params = sum([p.numel() for p in model.parameters()])
@@ -335,6 +356,7 @@ if __name__ == "__main__":
     collator = DataCollatorForSupervisedDataset(tokenizer)
 
     train_sampler, train_loader, val_loader = get_dataloaders(
+        use_multipack_sampler,
         max_length,
         train_dataset,
         val_dataset,
@@ -369,6 +391,8 @@ if __name__ == "__main__":
                 "shuffle": shuffle,
                 "seed": seed,
                 "disable_dropout": disable_dropout,
+                "use_multipack_sampler": use_multipack_sampler,
+                "train_on_inputs": train_on_inputs,
                 "epochs": epochs,
                 "acc_steps": acc_steps,
                 "batch_size": train_batch_size,
