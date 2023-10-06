@@ -102,7 +102,7 @@ class SupervisedDataset(Dataset):
         logging.warning("Formatting inputs...")
 
         sources = [
-            f"{tokenizer.bos_token}{fmt_prompt(example['instruction'])}"
+            f"{fmt_prompt(example['instruction'])}"
             for example in list_data_dict
         ]
 

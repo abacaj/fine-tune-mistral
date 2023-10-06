@@ -63,7 +63,6 @@ def setup_model(model_name, max_length):
         model_max_length=max_length,
         padding_side="right",
         use_fast=False,
-        add_bos_token=False,
         pad_token=DEFAULT_PAD_TOKEN,
         use_auth_token=os.environ["HF_TOKEN"],
         trust_remote_code=True,
