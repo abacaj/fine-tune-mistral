@@ -70,6 +70,38 @@ def preprocess(
     return dict(input_ids=input_ids, labels=labels)
 
 
+def _filter_tokenize_fn(
+    strings: Sequence[str], tokenizer: transformers.PreTrainedTokenizer
+) -> Dict:
+    samples = []
+    for text in strings:
+        tokens = tokenizer(
+            text,
+            return_tensors="pt",
+            padding=False,
+            max_length=tokenizer.model_max_length,
+            truncation=True,
+        )
+
+        if tokens.input_ids.squeeze().numel() < tokenizer.model_max_length:
+            samples.append(True)
+        else:
+            samples.append(False)
+
+    return samples
+
+
+def filter_long_samples(
+    samples: Sequence[str],
+    tokenizer: transformers.PreTrainedTokenizer,
+) -> Dict:
+    sources = [f"{fmt_prompt(question)}" for question in samples["instruction"]]
+    targets = [f"{answer}{tokenizer.eos_token}" for answer in samples["output"]]
+    examples = [s + t for s, t in zip(sources, targets)]
+
+    return _filter_tokenize_fn(examples, tokenizer)
+
+
 class SupervisedDataset(Dataset):
     """Dataset for supervised fine-tuning."""
 
@@ -83,16 +115,24 @@ class SupervisedDataset(Dataset):
         super(SupervisedDataset, self).__init__()
         workers = math.ceil(os.cpu_count() / dist.get_world_size())
         logging.warning(f"TOKENIZING WITH NUM_WORKERS: {workers}")
-
-        dataset = datasets.load_dataset(
-            "json",
-            data_files=data_paths,
-            split=f"train[0:{limit}]" if limit else "train",
-        ).map(
-            lambda samples: preprocess(train_on_inputs, samples, tokenizer),
-            batched=True,
-            batch_size=3000,
-            num_proc=workers,
+        dataset = (
+            datasets.load_dataset(
+                "json",
+                data_files=data_paths,
+                split=f"train[0:{limit}]" if limit else "train",
+            )
+            .filter(
+                lambda samples: filter_long_samples(samples, tokenizer),
+                batched=True,
+                batch_size=3000,
+                num_proc=workers,
+            )
+            .map(
+                lambda samples: preprocess(train_on_inputs, samples, tokenizer),
+                batched=True,
+                batch_size=3000,
+                num_proc=workers,
+            )
         )
 
         self.size = dataset.dataset_size
