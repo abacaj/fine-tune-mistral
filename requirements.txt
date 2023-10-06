@@ -3,6 +3,7 @@ certifi==2023.7.22
 charset-normalizer==3.3.0
 click==8.1.7
 cmake==3.27.6
+datasets==2.14.5
 docker-pycreds==0.4.0
 filelock==3.12.4
 fsspec==2023.9.2
