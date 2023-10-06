@@ -55,8 +55,8 @@ def preprocess(
     tokenizer: transformers.PreTrainedTokenizer,
 ) -> Dict:
     """Preprocess the data by tokenizing."""
-    sources = [f"{fmt_prompt(question)}" for question in samples["question"]]
-    targets = [f"{answer}{tokenizer.eos_token}" for answer in samples["answer"]]
+    sources = [f"{fmt_prompt(question)}" for question in samples["instruction"]]
+    targets = [f"{answer}{tokenizer.eos_token}" for answer in samples["output"]]
     examples = [s + t for s, t in zip(sources, targets)]
     examples_tokenized, sources_tokenized = [
         _tokenize_fn(strings, tokenizer) for strings in (examples, sources)
