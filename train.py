@@ -300,6 +300,7 @@ if __name__ == "__main__":
     lr = 2e-05  # adjust as needed
     weight_decay = 0.0  # adjust as needed
     gradient_clipping = 1.0  # adjust as needed
+    train_on_inputs = False
 
     model, tokenizer = setup_model(model_name, max_length)
     num_params = sum([p.numel() for p in model.parameters()])
@@ -329,8 +330,8 @@ if __name__ == "__main__":
 
     ds = ["data/train.jsonl"]
     val = ["data/validation.jsonl"]
-    train_dataset = SupervisedDataset(tokenizer, ds)
-    val_dataset = SupervisedDataset(tokenizer, val)
+    train_dataset = SupervisedDataset(train_on_inputs, tokenizer, ds)
+    val_dataset = SupervisedDataset(train_on_inputs, tokenizer, val)
     collator = DataCollatorForSupervisedDataset(tokenizer)
 
     train_sampler, train_loader, val_loader = get_dataloaders(

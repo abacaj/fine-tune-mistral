@@ -46,6 +46,7 @@ def _tokenize_fn(
 
 
 def preprocess(
+    train_on_inputs: bool,
     sources: Sequence[str],
     targets: Sequence[str],
     tokenizer: transformers.PreTrainedTokenizer,
@@ -58,7 +59,8 @@ def preprocess(
     input_ids = examples_tokenized["input_ids"]
     labels = copy.deepcopy(input_ids)
     for label, source_len in zip(labels, sources_tokenized["input_ids_lens"]):
-        label[:source_len] = IGNORE_INDEX
+        if not train_on_inputs:
+            label[:source_len] = IGNORE_INDEX
 
     return dict(input_ids=input_ids, labels=labels)
 
@@ -91,6 +93,7 @@ class SupervisedDataset(Dataset):
 
     def __init__(
         self,
+        train_on_inputs: bool,
         tokenizer: transformers.PreTrainedTokenizer,
         data_path: list[str],
         limit=-1,
@@ -111,7 +114,7 @@ class SupervisedDataset(Dataset):
         ]
 
         logging.warning("Tokenizing inputs... This may take some time...")
-        data_dict = preprocess(sources, targets, tokenizer)
+        data_dict = preprocess(train_on_inputs, sources, targets, tokenizer)
 
         self.input_ids = data_dict["input_ids"]
         self.labels = data_dict["labels"]
