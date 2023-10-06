@@ -129,10 +129,10 @@ def get_dataloaders(
     validation_batch_size,
 ):
     if use_multipack_sampler:
-        lengths = np.array([len(tokens["input_ids"]) for tokens in train_dataset])
+        train_lengths = np.array([len(tokens["input_ids"]) for tokens in train_dataset])
         train_sampler = MultipackDistributedBatchSampler(
             batch_max_length=train_batch_size * max_length,
-            lengths=lengths,
+            lengths=train_lengths,
             num_replicas=world_size,
             rank=local_rank,
             seed=seed,
@@ -143,6 +143,22 @@ def get_dataloaders(
             pin_memory=True,
             collate_fn=collator,
             batch_sampler=train_sampler,
+        )
+
+        val_lengths = np.array([len(tokens["input_ids"]) for tokens in train_dataset])
+        val_sampler = MultipackDistributedBatchSampler(
+            batch_max_length=train_batch_size * max_length,
+            lengths=val_lengths,
+            num_replicas=world_size,
+            rank=local_rank,
+            seed=seed,
+        )
+
+        val_loader = DataLoader(
+            train_dataset,
+            pin_memory=True,
+            collate_fn=collator,
+            batch_sampler=val_sampler,
         )
     else:
         train_sampler = DistributedSampler(
@@ -163,23 +179,23 @@ def get_dataloaders(
             sampler=train_sampler,
         )
 
-    val_sampler = DistributedSampler(
-        val_dataset,
-        num_replicas=world_size,
-        rank=local_rank,
-        shuffle=shuffle,
-        seed=seed,
-    )
+        val_sampler = DistributedSampler(
+            val_dataset,
+            num_replicas=world_size,
+            rank=local_rank,
+            shuffle=shuffle,
+            seed=seed,
+        )
 
-    val_loader = DataLoader(
-        val_dataset,
-        shuffle=False,
-        pin_memory=True,
-        drop_last=True,
-        batch_size=validation_batch_size,
-        collate_fn=collator,
-        sampler=val_sampler,
-    )
+        val_loader = DataLoader(
+            val_dataset,
+            shuffle=False,
+            pin_memory=True,
+            drop_last=True,
+            batch_size=validation_batch_size,
+            collate_fn=collator,
+            sampler=val_sampler,
+        )
 
     return train_sampler, train_loader, val_loader
 
@@ -314,7 +330,7 @@ if __name__ == "__main__":
     clip_gradients = True
     shuffle = True  # multipack sampler already does random sampling
     train_batch_size = 2  # adjust as needed
-    validation_batch_size = 16  # adjust as needed
+    validation_batch_size = 2  # adjust as needed
     epochs = 3  # adjust as needed
     acc_steps = 0  # TODO: not implemented here yet
     lr = 2e-05  # adjust as needed
