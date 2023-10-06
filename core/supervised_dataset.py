@@ -85,7 +85,9 @@ class SupervisedDataset(Dataset):
         logging.warning(f"TOKENIZING WITH NUM_WORKERS: {workers}")
 
         dataset = datasets.load_dataset(
-            "json", data_files=data_paths, split=f"train[0:{limit}]"
+            "json",
+            data_files=data_paths,
+            split=f"train[0:{limit}]" if limit else "train",
         ).map(
             lambda samples: preprocess(train_on_inputs, samples, tokenizer),
             batched=True,
