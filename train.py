@@ -1,3 +1,4 @@
+import random
 from core.supervised_dataset import (
     DEFAULT_PAD_TOKEN,
     DEFAULT_EOS_TOKEN,
@@ -88,6 +89,9 @@ def evaluation(
     wandb,
     local_rank,
 ):
+    if local_rank == 0:
+        print("RUNNING EVAL")
+
     model.eval()
     losses = 0
     for step, batch in enumerate(eval_dataloader):
@@ -145,7 +149,7 @@ def get_dataloaders(
             batch_sampler=train_sampler,
         )
 
-        val_lengths = np.array([len(tokens["input_ids"]) for tokens in train_dataset])
+        val_lengths = np.array([len(tokens["input_ids"]) for tokens in val_dataset])
         val_sampler = MultipackDistributedBatchSampler(
             batch_max_length=train_batch_size * max_length,
             lengths=val_lengths,
@@ -336,8 +340,10 @@ if __name__ == "__main__":
     lr = 2e-05  # adjust as needed
     weight_decay = 0.0  # adjust as needed
     gradient_clipping = 1.0  # adjust as needed
-    train_on_inputs = False # whether to train on instruction tokens
-    use_multipack_sampler = True # whether to use the multipack sampler or torch sampler
+    train_on_inputs = False  # whether to train on instruction tokens
+    use_multipack_sampler = (
+        True  # whether to use the multipack sampler or torch sampler
+    )
 
     model, tokenizer = setup_model(model_name, max_length)
     num_params = sum([p.numel() for p in model.parameters()])
