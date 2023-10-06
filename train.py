@@ -337,8 +337,8 @@ if __name__ == "__main__":
 
     train_ds = ["data/train.jsonl"]
     val_ds = ["data/validation.jsonl"]
-    train_dataset = SupervisedDataset(train_on_inputs, tokenizer, train_ds, limit=2500)
-    val_dataset = SupervisedDataset(train_on_inputs, tokenizer, val_ds, limit=1000)
+    train_dataset = SupervisedDataset(train_on_inputs, tokenizer, train_ds)
+    val_dataset = SupervisedDataset(train_on_inputs, tokenizer, val_ds)
     collator = DataCollatorForSupervisedDataset(tokenizer)
 
     train_sampler, train_loader = get_dataloader(
