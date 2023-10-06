@@ -23,3 +23,4 @@ torchrun --nnodes=1 --nproc-per-node=<REPLACE_WITH_NUMBER_OF_GPUS> train.py
 - Use enough data, I recommend > 1k samples
 - I ran this for 3 epochs on 40k samples, will need to experiment more on epochs because the model was still improving.
 - The better way to tell if your model is improving or just overfitting or even getting worse, you should add evaluation on your task. This is data that is not part of training. For example, on code completion you can evaluate your model on the mbpp validation set or a custom set you have.
+- Use FSDP option: `backward_prefetch=BackwardPrefetch.BACKWARD_PRE` if you have the GPU memory, or `backward_prefetch=BackwardPrefetch.BACKWARD_POST`. This can cause OOM so it was set to None
