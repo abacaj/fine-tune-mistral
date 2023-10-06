@@ -119,89 +119,53 @@ def evaluation(
     return val_loss
 
 
-def get_dataloaders(
+def get_dataloader(
     use_multipack_sampler,
     max_length,
-    train_dataset,
-    val_dataset,
+    dataset,
     world_size,
     local_rank,
     shuffle,
     seed,
     collator,
-    train_batch_size,
-    validation_batch_size,
+    batch_size,
 ):
     if use_multipack_sampler:
-        train_lengths = np.array([len(tokens["input_ids"]) for tokens in train_dataset])
-        train_sampler = MultipackDistributedBatchSampler(
+        lengths = np.array([len(tokens["input_ids"]) for tokens in dataset])
+        sampler = MultipackDistributedBatchSampler(
             batch_max_length=train_batch_size * max_length,
-            lengths=train_lengths,
+            lengths=lengths,
             num_replicas=world_size,
             rank=local_rank,
             seed=seed,
         )
 
-        train_loader = DataLoader(
-            train_dataset,
+        loader = DataLoader(
+            dataset,
             pin_memory=True,
             collate_fn=collator,
-            batch_sampler=train_sampler,
-        )
-
-        val_lengths = np.array([len(tokens["input_ids"]) for tokens in val_dataset])
-        val_sampler = MultipackDistributedBatchSampler(
-            batch_max_length=train_batch_size * max_length,
-            lengths=val_lengths,
-            num_replicas=world_size,
-            rank=local_rank,
-            seed=seed,
-        )
-
-        val_loader = DataLoader(
-            train_dataset,
-            pin_memory=True,
-            collate_fn=collator,
-            batch_sampler=val_sampler,
+            batch_sampler=sampler,
         )
     else:
-        train_sampler = DistributedSampler(
-            train_dataset,
+        sampler = DistributedSampler(
+            dataset,
             num_replicas=world_size,
             rank=local_rank,
             shuffle=shuffle,
             seed=seed,
         )
 
-        train_loader = DataLoader(
-            train_dataset,
+        loader = DataLoader(
+            dataset,
             shuffle=False,
             pin_memory=True,
             drop_last=True,
-            batch_size=train_batch_size,
+            batch_size=batch_size,
             collate_fn=collator,
-            sampler=train_sampler,
+            sampler=sampler,
         )
 
-        val_sampler = DistributedSampler(
-            val_dataset,
-            num_replicas=world_size,
-            rank=local_rank,
-            shuffle=shuffle,
-            seed=seed,
-        )
-
-        val_loader = DataLoader(
-            val_dataset,
-            shuffle=False,
-            pin_memory=True,
-            drop_last=True,
-            batch_size=validation_batch_size,
-            collate_fn=collator,
-            sampler=val_sampler,
-        )
-
-    return train_sampler, train_loader, val_loader
+    return sampler, loader
 
 
 def get_parameter_names(model, forbidden_layer_types):
@@ -371,23 +335,32 @@ if __name__ == "__main__":
     model = FSDP(model, **fsdp_config)
     optimizer = get_optimizer(model, lr, weight_decay)
 
-    ds = ["data/train.jsonl"]
-    val = ["data/validation.jsonl"]
-    train_dataset = SupervisedDataset(train_on_inputs, tokenizer, ds)
-    val_dataset = SupervisedDataset(train_on_inputs, tokenizer, val)
+    train_ds = ["data/train.jsonl"]
+    val_ds = ["data/validation.jsonl"]
+    train_dataset = SupervisedDataset(train_on_inputs, tokenizer, train_ds, limit=2500)
+    val_dataset = SupervisedDataset(train_on_inputs, tokenizer, val_ds, limit=1000)
     collator = DataCollatorForSupervisedDataset(tokenizer)
 
-    train_sampler, train_loader, val_loader = get_dataloaders(
+    train_sampler, train_loader = get_dataloader(
         use_multipack_sampler,
         max_length,
         train_dataset,
-        val_dataset,
         world_size,
         local_rank,
         shuffle,
         seed,
         collator,
         train_batch_size,
+    )
+    val_sampler, val_loader = get_dataloader(
+        use_multipack_sampler,
+        max_length,
+        val_dataset,
+        world_size,
+        local_rank,
+        shuffle,
+        seed,
+        collator,
         validation_batch_size,
     )
 
@@ -405,8 +378,8 @@ if __name__ == "__main__":
                 "run_id": run_id,
                 "date": date_of_run,
                 "dataset_size": len(train_dataset),
-                "dataset": " ".join(ds),
-                "validation": " ".join(val),
+                "dataset": ",".join(train_ds),
+                "validation": ",".join(val_ds),
                 "weight_decay": weight_decay,
                 "clip_gradients": clip_gradients,
                 "learning_rate": lr,

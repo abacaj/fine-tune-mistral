@@ -95,18 +95,17 @@ class SupervisedDataset(Dataset):
         self,
         train_on_inputs: bool,
         tokenizer: transformers.PreTrainedTokenizer,
-        data_path: list[str],
+        data_paths: list[str],
         limit=-1,
     ):
         super(SupervisedDataset, self).__init__()
         logging.warning("Loading data...")
-        list_data_dict = load_json(data_path, limit)
+        list_data_dict = load_json(data_paths, limit)
 
         logging.warning("Formatting inputs...")
 
         sources = [
-            f"{fmt_prompt(example['instruction'])}"
-            for example in list_data_dict
+            f"{fmt_prompt(example['instruction'])}" for example in list_data_dict
         ]
 
         targets = [
