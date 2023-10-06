@@ -133,7 +133,7 @@ def get_dataloader(
     if use_multipack_sampler:
         lengths = np.array([len(tokens["input_ids"]) for tokens in dataset])
         sampler = MultipackDistributedBatchSampler(
-            batch_max_length=train_batch_size * max_length,
+            batch_max_length=batch_size * max_length,
             lengths=lengths,
             num_replicas=world_size,
             rank=local_rank,
