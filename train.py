@@ -364,9 +364,12 @@ if __name__ == "__main__":
         validation_batch_size,
     )
 
-    total_steps_per_epoch = train_sampler.num_batches()
-    max_steps = total_steps_per_epoch * epochs
+    if use_multipack_sampler:
+        total_steps_per_epoch = train_sampler.num_batches()
+    else:
+        total_steps_per_epoch = len(train_loader)
 
+    max_steps = total_steps_per_epoch * epochs
     scheduler = get_scheduler(local_rank, scheduler_type, optimizer, max_steps)
 
     if local_rank == 0:
