@@ -77,7 +77,7 @@ def setup_model(model_name, max_length):
     if tokenizer.unk_token is None:
         special_tokens_dict["unk_token"] = DEFAULT_UNK_TOKEN
 
-    tokenizer.add_tokens(special_tokens_dict)
+    tokenizer.add_special_tokens(special_tokens_dict)
     model.resize_token_embeddings(len(tokenizer))
 
     return model, tokenizer
