@@ -135,12 +135,11 @@ class SupervisedDataset(Dataset):
             )
         )
 
-        self.size = dataset.dataset_size
         self.input_ids = dataset["input_ids"]
         self.labels = dataset["labels"]
 
     def __len__(self):
-        return self.size
+        return len(self.input_ids)
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
         return dict(
