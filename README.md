@@ -11,6 +11,12 @@ python -m venv env \
   && pip install -r requirements.txt
 ```
 
+[Get a Hugging Face token](https://huggingface.co/settings/tokens) and set the variable:
+
+```
+export HF_TOKEN="[insert token here]"
+```
+
 Run training code:
 ```
 torchrun --nnodes=1 --nproc-per-node=<REPLACE_WITH_NUMBER_OF_GPUS> train.py
