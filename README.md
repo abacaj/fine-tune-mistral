@@ -2,6 +2,8 @@
 
 Code used to fine-tune this model: [abacaj/mistral-7b-sft](https://huggingface.co/abacaj/mistral-7b-sft). Add your data in the data folder as `train.jsonl` and `validation.jsonl`.
 
+**Note** this repo is intended for full fine-tuning of mistral not qlora or other methods.
+
 # How to run
 
 Install dependencies:
